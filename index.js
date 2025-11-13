@@ -1,76 +1,41 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware - SIMPLIFIED CORS
-app.use(cors({
-  origin: '*', // Allow all origins for now
-  credentials: true
-}));
+// Basic middleware
+app.use(cors());
 app.use(express.json());
 
-// MongoDB connection with better error handling
-const MONGODB_URI = process.env.MONGODB_URI;
-
-console.log('Attempting MongoDB connection...');
-
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('✅ MongoDB connected successfully');
-  console.log('📊 Database:', mongoose.connection.db.databaseName);
-})
-.catch(err => {
-  console.log('❌ MongoDB connection error:', err.message);
-});
-
-// Basic route
+// Test route - NO DATABASE
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Habit Tracker Server is running!',
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
+  res.json({ message: 'Server is working!' });
 });
 
-// Test route
 app.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Test route working!',
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
+  res.json({ message: 'Test route working!' });
 });
 
-// Test database route
-app.get('/test-db', async (req, res) => {
-  try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(500).json({ error: 'Database not connected' });
+// Simple habits route without database
+app.get('/api/habits/browse', (req, res) => {
+  res.json([
+    {
+      _id: '1',
+      title: 'Morning Meditation',
+      description: 'Start your day with 10 minutes of meditation',
+      category: 'Morning',
+      userName: 'Test User',
+      currentStreak: 5,
+      completionHistory: [],
+      isPublic: true
     }
-    
-    // Try to list collections to test DB connection
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    res.json({ 
-      message: 'Database test successful!',
-      collections: collections.map(c => c.name)
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  ]);
 });
-
-// Import and use habit routes
-const habitRoutes = require('./routes/habits');
-app.use('/api/habits', habitRoutes);
 
 // Start server
 app.listen(port, () => {
-  console.log(`🚀 Server is running on port: ${port}`);
-  console.log(`📡 MongoDB URI: ${MONGODB_URI ? 'Set' : 'Not set'}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
 
 module.exports = app;
